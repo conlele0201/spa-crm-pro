@@ -12,7 +12,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final AuthService _auth = AuthService();
 
   final TextEditingController _email = TextEditingController();
-  final TextEditingController _password = TextEditingController();
+  final TextEditingEditingController _password = TextEditingController();
 
   bool _isLoading = false;
   String? _errorMessage;
@@ -31,6 +31,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (response.user == null) {
         setState(() => _errorMessage = "Sai email hoặc mật khẩu");
+      } else {
+        if (!mounted) return;
+        Navigator.pushReplacementNamed(context, '/dashboard');
       }
     } catch (e) {
       setState(() => _errorMessage = "Đăng nhập thất bại");
@@ -116,4 +119,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-
