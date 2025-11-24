@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'services/supabase_service.dart';
 import 'screens/login_screen.dart';
+import 'screens/dashboard_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,7 +23,11 @@ class SpaCRMApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const LoginScreen(),
+      initialRoute: '/login',
+      routes: {
+        '/login': (_) => const LoginScreen(),
+        '/dashboard': (_) => DashboardScreen(),
+      },
     );
   }
 }
