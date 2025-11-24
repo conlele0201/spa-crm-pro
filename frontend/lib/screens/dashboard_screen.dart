@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../controllers/dashboard_controller.dart';
 import 'customers_screen.dart';
+import 'staff_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -14,11 +15,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final DashboardController dashboard = DashboardController();
   final String spaId = "spa-demo-123";
 
-  final List<String> menu = [
-    "Dashboard",
-    "Khách hàng",
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -30,6 +26,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final pages = [
       _dashboardUI(),
       const CustomersScreen(),
+      const StaffScreen(),
     ];
 
     return Scaffold(
@@ -52,6 +49,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 selectedIcon: Icon(Icons.people),
                 label: Text("Khách hàng"),
               ),
+              NavigationRailDestination(
+                icon: Icon(Icons.badge_outlined),
+                selectedIcon: Icon(Icons.badge),
+                label: Text("Nhân viên"),
+              ),
             ],
           ),
 
@@ -61,7 +63,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // UI Dashboard chính
   Widget _dashboardUI() {
     return AnimatedBuilder(
       animation: dashboard,
