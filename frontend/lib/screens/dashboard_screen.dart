@@ -1,17 +1,24 @@
 import 'package:flutter/material.dart';
+import '../controllers/menu_controller.dart';
 import '../services/auth_service.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   DashboardScreen({super.key});
 
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
   final AuthService _auth = AuthService();
+  final MenuController menuController = MenuController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Row(
         children: [
-          // Sidebar trái
+          // SIDEBAR
           Container(
             width: 220,
             color: const Color(0xFF1F2937),
@@ -29,18 +36,43 @@ class DashboardScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                _menuItem(Icons.people, "Khách hàng"),
-                _menuItem(Icons.calendar_month, "Lịch hẹn"),
-                _menuItem(Icons.medical_services, "Dịch vụ"),
-                _menuItem(Icons.local_offer, "Gói liệu trình"),
-                _menuItem(Icons.inventory, "Kho hàng"),
-                _menuItem(Icons.person, "Nhân viên"),
-                _menuItem(Icons.receipt_long, "Hóa đơn"),
-                _menuItem(Icons.settings, "Cài đặt"),
 
-                const Spacer(),
+                // MENU LIST
+                Expanded(
+                  child: ListView(
+                    children: menuController.items.map((item) {
+                      bool active = item.key == menuController.activeKey;
 
-                // Logout
+                      return InkWell(
+                        onTap: () {
+                          setState(() {
+                            menuController.setActive(item.key);
+                          });
+                        },
+                        child: Container(
+                          color: active ? Colors.blueGrey.shade700 : Colors.transparent,
+                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                          child: Row(
+                            children: [
+                              Icon(item.icon, color: Colors.white70),
+                              const SizedBox(width: 12),
+                              Text(
+                                item.title,
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: active ? FontWeight.bold : FontWeight.normal,
+                                ),
+                              )
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+
+                // LOGOUT
                 InkWell(
                   onTap: () async {
                     await _auth.signOut();
@@ -60,13 +92,12 @@ class DashboardScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 20),
               ],
             ),
           ),
 
-          // Khu vực nội dung chính
+          // MAIN BODY
           Expanded(
             child: Column(
               children: [
@@ -76,58 +107,33 @@ class DashboardScreen extends StatelessWidget {
                   color: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   alignment: Alignment.centerLeft,
-                  child: const Text(
-                    "Dashboard",
-                    style: TextStyle(
+                  child: Text(
+                    menuController.items
+                        .firstWhere((e) => e.key == menuController.activeKey)
+                        .title,
+                    style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
 
-                // BODY
                 Expanded(
                   child: Container(
                     color: const Color(0xFFF3F4F6),
                     child: const Center(
                       child: Text(
-                        "Welcome to Spa CRM Pro",
-                        style: TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        "Màn hình tính năng sẽ hiển thị tại đây",
+                        style: TextStyle(fontSize: 20),
                       ),
                     ),
                   ),
-                ),
+                )
               ],
             ),
-          ),
+          )
         ],
       ),
     );
   }
-
-  Widget _menuItem(IconData icon, String title) {
-    return InkWell(
-      onTap: () {},
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-        child: Row(
-          children: [
-            Icon(icon, color: Colors.white70),
-            const SizedBox(width: 12),
-            Text(
-              title,
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 16,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
-
