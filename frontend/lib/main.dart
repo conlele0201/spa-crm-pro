@@ -4,6 +4,7 @@ import 'config/supabase_config.dart';
 import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/customers_screen.dart';
+import 'screens/staff_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,6 +30,7 @@ class SpaCRMApp extends StatelessWidget {
         '/login': (_) => const LoginScreen(),
         '/dashboard': (_) => const DashboardScreen(),
         '/customers': (_) => const CustomersScreen(),
+        '/staff': (_) => const StaffScreen(),
       },
     );
   }
