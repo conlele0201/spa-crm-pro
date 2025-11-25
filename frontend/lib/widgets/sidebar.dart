@@ -16,45 +16,59 @@ class Sidebar extends StatelessWidget {
       child: ListView(
         children: [
           const SizedBox(height: 20),
+
           _menuItem(
             icon: Icons.dashboard,
             label: "Dashboard",
             page: "dashboard",
           ),
+
           _menuItem(
             icon: Icons.people,
             label: "Khách hàng",
             page: "customers",
           ),
+
           _menuItem(
             icon: Icons.groups,
             label: "Nhân viên",
             page: "staff",
           ),
+
           _menuItem(
             icon: Icons.design_services,
             label: "Dịch vụ",
             page: "services",
           ),
+
           _menuItem(
             icon: Icons.event,
             label: "Lịch hẹn",
             page: "appointments",
           ),
+
           _menuItem(
             icon: Icons.receipt_long,
             label: "Hóa đơn",
             page: "billing",
           ),
+
           _menuItem(
             icon: Icons.inventory_2,
             label: "Kho mỹ phẩm",
             page: "inventory",
           ),
+
           _menuItem(
             icon: Icons.schedule,
             label: "Ca làm việc",
-            page: "staff_shifts",    // ← THÊM MỤC STAFF SHIFTS
+            page: "staff_shifts",
+          ),
+
+          _menuItem(
+            icon: Icons.spa,
+            label: "Liệu trình",
+            page: "treatment_sessions",
           ),
         ],
       ),
