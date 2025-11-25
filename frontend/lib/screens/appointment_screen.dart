@@ -1,57 +1,89 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-
 import '../controllers/appointments_controller.dart';
 import '../models/appointment_model.dart';
-import '../widgets/loading_widget.dart';
+import 'appointment_form.dart';
 
-class AppointmentScreen extends StatelessWidget {
+class AppointmentScreen extends StatefulWidget {
   final String spaId;
 
   const AppointmentScreen({super.key, required this.spaId});
 
   @override
+  State<AppointmentScreen> createState() => _AppointmentScreenState();
+}
+
+class _AppointmentScreenState extends State<AppointmentScreen> {
+  final AppointmentsController controller = AppointmentsController();
+
+  @override
+  void initState() {
+    super.initState();
+    controller.loadAppointments(widget.spaId);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => AppointmentsController()..loadAppointments(spaId),
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text("Appointments"),
-        ),
-        body: Consumer<AppointmentsController>(
-          builder: (context, controller, child) {
-            if (controller.loading) {
-              return const LoadingWidget();
-            }
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Lịch hẹn"),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (_) => AppointmentForm(
+              spaId: widget.spaId,
+              controller: controller,
+            ),
+          );
+        },
+        child: const Icon(Icons.add),
+      ),
+      body: AnimatedBuilder(
+        animation: controller,
+        builder: (_, __) {
+          if (controller.loading) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-            return ListView.builder(
-              itemCount: controller.appointments.length,
-              itemBuilder: (context, index) {
-                final appt = controller.appointments[index];
+          if (controller.appointments.isEmpty) {
+            return const Center(child: Text("Chưa có lịch hẹn"));
+          }
 
-                return Card(
-                  margin: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 8),
-                  child: ListTile(
-                    title: Text("Customer: ${appt.customerId}"),
-                    subtitle: Text(
-                      "Service: ${appt.serviceId}\n"
-                      "Time: ${appt.datetime}",
-                    ),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.delete),
-                      onPressed: () {
-                        controller.deleteAppointment(appt.id, spaId);
-                      },
-                    ),
+          return ListView(
+            padding: const EdgeInsets.all(12),
+            children: controller.appointments.map((appt) {
+              return Card(
+                child: ListTile(
+                  title: Text("Khách hàng ID: ${appt.customerId}"),
+                  subtitle: Text(
+                    "Dịch vụ ID: ${appt.serviceId}\n"
+                    "Nhân viên ID: ${appt.staffId}\n"
+                    "Thời gian: ${appt.scheduledAt}\n"
+                    "Ghi chú: ${appt.note ?? '--'}",
                   ),
-                );
-              },
-            );
-          },
-        ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete),
+                    onPressed: () {
+                      controller.deleteAppointment(appt.id, widget.spaId);
+                    },
+                  ),
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (_) => AppointmentForm(
+                        spaId: widget.spaId,
+                        controller: controller,
+                        appointment: appt,
+                      ),
+                    );
+                  },
+                ),
+              );
+            }).toList(),
+          );
+        },
       ),
     );
   }
 }
-
