@@ -49,7 +49,12 @@ class Sidebar extends StatelessWidget {
           _menuItem(
             icon: Icons.inventory_2,
             label: "Kho mỹ phẩm",
-            page: "inventory",    // ← THÊM INVENTORY Ở ĐÂY
+            page: "inventory",
+          ),
+          _menuItem(
+            icon: Icons.schedule,
+            label: "Ca làm việc",
+            page: "staff_shifts",    // ← THÊM MỤC STAFF SHIFTS
           ),
         ],
       ),
