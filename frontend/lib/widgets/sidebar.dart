@@ -44,7 +44,12 @@ class Sidebar extends StatelessWidget {
           _menuItem(
             icon: Icons.receipt_long,
             label: "Hóa đơn",
-            page: "billing",        // ← THÊM MỤC BILLING Ở ĐÂY
+            page: "billing",
+          ),
+          _menuItem(
+            icon: Icons.inventory_2,
+            label: "Kho mỹ phẩm",
+            page: "inventory",    // ← THÊM INVENTORY Ở ĐÂY
           ),
         ],
       ),
