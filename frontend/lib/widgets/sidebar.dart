@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import '../screens/dashboard.dart';
+import '../screens/dashboard_screen.dart';
 import '../screens/customers_screen.dart';
 import '../screens/staff_screen.dart';
 import '../screens/service_screen.dart';
+import '../screens/appointment_screen.dart';
 
 class Sidebar extends StatelessWidget {
   final Function(Widget) onSelectScreen;
@@ -51,6 +52,14 @@ class Sidebar extends StatelessWidget {
             onTap: () => onSelectScreen(const ServiceScreen()),
           ),
 
+          _item(
+            icon: Icons.event_available,
+            label: "Lịch hẹn",
+            onTap: () => onSelectScreen(
+              const AppointmentScreen(spaId: "spa-demo-123"),
+            ),
+          ),
+
           const Spacer(),
 
           const Padding(
@@ -85,4 +94,3 @@ class Sidebar extends StatelessWidget {
     );
   }
 }
-
