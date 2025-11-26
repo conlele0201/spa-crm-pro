@@ -70,6 +70,12 @@ class Sidebar extends StatelessWidget {
             label: "Liệu trình",
             page: "treatment_sessions",
           ),
+
+          _menuItem(
+            icon: Icons.card_membership,
+            label: "Hội viên",
+            page: "memberships",
+          ),
         ],
       ),
     );
