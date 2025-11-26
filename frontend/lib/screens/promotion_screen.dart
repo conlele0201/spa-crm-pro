@@ -1,98 +1,94 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../controllers/promotion_controller.dart';
 import '../models/promotion_model.dart';
-import 'promotion_form.dart';
+import '../widgets/promotion_form.dart';
 
 class PromotionScreen extends StatefulWidget {
-  final String spaId;
-
-  const PromotionScreen({super.key, required this.spaId});
+  const PromotionScreen({super.key});
 
   @override
   State<PromotionScreen> createState() => _PromotionScreenState();
 }
 
 class _PromotionScreenState extends State<PromotionScreen> {
+  final PromotionController controller = PromotionController();
+
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
-      context.read<PromotionController>().loadPromotions(widget.spaId);
-    });
+    controller.loadPromotions("spa_1"); // Tạm thời hardcode, sau sẽ thay bằng spa thật
+  }
+
+  void openForm({PromotionModel? data}) {
+    showDialog(
+      context: context,
+      builder: (_) => PromotionForm(
+        existing: data,
+        onSaved: () {
+          Navigator.pop(context);
+          controller.loadPromotions("spa_1");
+        },
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final controller = context.watch<PromotionController>();
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) {
+        if (controller.loading) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Promotions"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () async {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => PromotionForm(
-                    spaId: widget.spaId,
-                    promotion: null,
-                  ),
-                ),
-              );
-            },
-          )
-        ],
-      ),
-      body: controller.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: controller.promotions.length,
-              itemBuilder: (context, index) {
-                final item = controller.promotions[index];
-                return Card(
-                  child: ListTile(
-                    title: Text(item.title),
-                    subtitle: Text("Discount: ${item.discountPercent}%"),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => PromotionForm(
-                                  spaId: widget.spaId,
-                                  promotion: item,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete),
-                          onPressed: () async {
-                            final ok = await controller.deletePromotion(item.id!);
-                            if (ok && mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text("Deleted successfully"),
-                                ),
-                              );
-                            }
-                          },
-                        )
+        return Scaffold(
+          floatingActionButton: FloatingActionButton(
+            onPressed: () => openForm(),
+            child: const Icon(Icons.add),
+          ),
+          body: Padding(
+            padding: const EdgeInsets.all(20),
+            child: controller.promotionList.isEmpty
+                ? const Center(child: Text("No promotions found"))
+                : SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: DataTable(
+                      columns: const [
+                        DataColumn(label: Text("Name")),
+                        DataColumn(label: Text("Type")),
+                        DataColumn(label: Text("Value")),
+                        DataColumn(label: Text("Start Date")),
+                        DataColumn(label: Text("End Date")),
+                        DataColumn(label: Text("Actions")),
                       ],
+                      rows: controller.promotionList.map((promo) {
+                        return DataRow(cells: [
+                          DataCell(Text(promo.name)),
+                          DataCell(Text(promo.type)),
+                          DataCell(Text(promo.value.toString())),
+                          DataCell(Text(promo.startDate.toString().split(" ")[0])),
+                          DataCell(Text(promo.endDate.toString().split(" ")[0])),
+                          DataCell(Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.edit, color: Colors.blue),
+                                onPressed: () => openForm(data: promo),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () async {
+                                  await controller.deletePromotion(promo.id, promo.spaId);
+                                },
+                              ),
+                            ],
+                          )),
+                        ]);
+                      }).toList(),
                     ),
                   ),
-                );
-              },
-            ),
+          ),
+        );
+      },
     );
   }
 }
-
