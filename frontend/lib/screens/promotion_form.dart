@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../controllers/promotion_controller.dart';
 import '../models/promotion_model.dart';
+import '../services/promotion_service.dart';
 
 class PromotionForm extends StatefulWidget {
-  final String spaId;
-  final PromotionModel? promotion;
+  final PromotionModel? existing;
+  final VoidCallback onSaved;
 
   const PromotionForm({
     super.key,
-    required this.spaId,
-    this.promotion,
+    this.existing,
+    required this.onSaved,
   });
 
   @override
@@ -20,117 +19,162 @@ class PromotionForm extends StatefulWidget {
 class _PromotionFormState extends State<PromotionForm> {
   final _formKey = GlobalKey<FormState>();
 
-  late TextEditingController titleController;
-  late TextEditingController descriptionController;
-  late TextEditingController discountController;
-  late TextEditingController startDateController;
-  late TextEditingController endDateController;
+  late TextEditingController nameCtrl;
+  late TextEditingController valueCtrl;
+
+  String type = "percent";
+  DateTime? startDate;
+  DateTime? endDate;
 
   @override
   void initState() {
     super.initState();
 
-    titleController =
-        TextEditingController(text: widget.promotion?.title ?? '');
-    descriptionController =
-        TextEditingController(text: widget.promotion?.description ?? '');
-    discountController =
-        TextEditingController(text: widget.promotion?.discountPercent.toString() ?? '');
-    startDateController =
-        TextEditingController(text: widget.promotion?.startDate ?? '');
-    endDateController =
-        TextEditingController(text: widget.promotion?.endDate ?? '');
+    nameCtrl = TextEditingController(text: widget.existing?.name ?? "");
+    valueCtrl = TextEditingController(
+        text: widget.existing?.value.toString() ?? "");
+
+    type = widget.existing?.type ?? "percent";
+    startDate = widget.existing?.startDate;
+    endDate = widget.existing?.endDate;
   }
 
-  @override
-  void dispose() {
-    titleController.dispose();
-    descriptionController.dispose();
-    discountController.dispose();
-    startDateController.dispose();
-    endDateController.dispose();
-    super.dispose();
+  Future<void> pickDate(bool isStart) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: now,
+      firstDate: DateTime(now.year - 5),
+      lastDate: DateTime(now.year + 5),
+    );
+
+    if (picked != null) {
+      setState(() {
+        if (isStart) {
+          startDate = picked;
+        } else {
+          endDate = picked;
+        }
+      });
+    }
+  }
+
+  Future<void> save() async {
+    if (!_formKey.currentState!.validate()) return;
+    if (startDate == null || endDate == null) return;
+
+    final model = PromotionModel(
+      id: widget.existing?.id ?? "",
+      spaId: widget.existing?.spaId ?? "spa_1",
+      name: nameCtrl.text.trim(),
+      type: type,
+      value: double.tryParse(valueCtrl.text.trim()) ?? 0,
+      startDate: startDate!,
+      endDate: endDate!,
+    );
+
+    final service = PromotionService();
+
+    if (widget.existing == null) {
+      await service.addPromotion(model);
+    } else {
+      await service.updatePromotion(model.id, model);
+    }
+
+    widget.onSaved();
   }
 
   @override
   Widget build(BuildContext context) {
-    final controller = context.read<PromotionController>();
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.promotion == null ? "Add Promotion" : "Edit Promotion",
-        ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
+    return AlertDialog(
+      title: Text(widget.existing == null
+          ? "Add Promotion"
+          : "Edit Promotion"),
+      content: SizedBox(
+        width: 450,
         child: Form(
           key: _formKey,
-          child: ListView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               TextFormField(
-                controller: titleController,
-                decoration: const InputDecoration(labelText: "Title"),
-                validator: (v) => v!.isEmpty ? "Required" : null,
+                controller: nameCtrl,
+                decoration: const InputDecoration(labelText: "Promotion Name"),
+                validator: (v) =>
+                    v == null || v.isEmpty ? "Required" : null,
               ),
-              TextFormField(
-                controller: descriptionController,
-                decoration: const InputDecoration(labelText: "Description"),
+              const SizedBox(height: 10),
+
+              DropdownButtonFormField(
+                value: type,
+                decoration: const InputDecoration(labelText: "Type"),
+                items: const [
+                  DropdownMenuItem(
+                    value: "percent",
+                    child: Text("Percent (%)"),
+                  ),
+                  DropdownMenuItem(
+                    value: "fixed",
+                    child: Text("Fixed Amount"),
+                  ),
+                ],
+                onChanged: (v) {
+                  setState(() {
+                    type = v.toString();
+                  });
+                },
               ),
+              const SizedBox(height: 10),
+
               TextFormField(
-                controller: discountController,
-                decoration: const InputDecoration(labelText: "Discount (%)"),
+                controller: valueCtrl,
+                decoration: const InputDecoration(labelText: "Value"),
                 keyboardType: TextInputType.number,
-                validator: (v) => v!.isEmpty ? "Required" : null,
-              ),
-              TextFormField(
-                controller: startDateController,
-                decoration: const InputDecoration(labelText: "Start Date (YYYY-MM-DD)"),
-                validator: (v) => v!.isEmpty ? "Required" : null,
-              ),
-              TextFormField(
-                controller: endDateController,
-                decoration: const InputDecoration(labelText: "End Date (YYYY-MM-DD)"),
-                validator: (v) => v!.isEmpty ? "Required" : null,
+                validator: (v) =>
+                    v == null || v.isEmpty ? "Required" : null,
               ),
               const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () async {
-                  if (!_formKey.currentState!.validate()) return;
 
-                  final model = PromotionModel(
-                    id: widget.promotion?.id,
-                    spaId: widget.spaId,
-                    title: titleController.text.trim(),
-                    description: descriptionController.text.trim(),
-                    discountPercent: int.parse(discountController.text),
-                    startDate: startDateController.text.trim(),
-                    endDate: endDateController.text.trim(),
-                  );
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(startDate == null
+                      ? "Start date: Pick"
+                      : "Start date: ${startDate!.toString().split(' ')[0]}"),
+                  ElevatedButton(
+                    onPressed: () => pickDate(true),
+                    child: const Text("Choose"),
+                  )
+                ],
+              ),
+              const SizedBox(height: 20),
 
-                  final bool ok = widget.promotion == null
-                      ? await controller.addPromotion(model)
-                      : await controller.updatePromotion(model);
-
-                  if (!mounted) return;
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(ok ? "Saved successfully" : "Failed to save"),
-                    ),
-                  );
-
-                  if (ok) Navigator.pop(context);
-                },
-                child: Text(
-                  widget.promotion == null ? "Create" : "Update",
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(endDate == null
+                      ? "End date: Pick"
+                      : "End date: ${endDate!.toString().split(' ')[0]}"),
+                  ElevatedButton(
+                    onPressed: () => pickDate(false),
+                    child: const Text("Choose"),
+                  )
+                ],
               ),
             ],
           ),
         ),
       ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text("Cancel"),
+        ),
+        ElevatedButton(
+          onPressed: save,
+          child: const Text("Save"),
+        ),
+      ],
     );
   }
 }
-
