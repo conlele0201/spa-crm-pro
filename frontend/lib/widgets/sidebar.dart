@@ -68,72 +68,20 @@ class Sidebar extends StatelessWidget {
 
           const SizedBox(height: 20),
 
-          menuItem(
-            id: "dashboard",
-            icon: Icons.dashboard,
-            label: "Dashboard",
-          ),
+          menuItem(id: "dashboard", icon: Icons.dashboard, label: "Dashboard"),
+          menuItem(id: "customers", icon: Icons.people, label: "Customers"),
+          menuItem(id: "staff", icon: Icons.badge, label: "Staff"),
+          menuItem(id: "services", icon: Icons.design_services, label: "Services"),
+          menuItem(id: "appointments", icon: Icons.calendar_today, label: "Appointments"),
+          menuItem(id: "billing", icon: Icons.receipt_long, label: "Billing"),
+          menuItem(id: "inventory", icon: Icons.inventory, label: "Inventory"),
+          menuItem(id: "staff_shifts", icon: Icons.access_time, label: "Staff Shifts"),
+          menuItem(id: "memberships", icon: Icons.card_membership, label: "Memberships"),
+          menuItem(id: "treatment_sessions", icon: Icons.healing, label: "Treatment Sessions"),
+          menuItem(id: "promotions", icon: Icons.local_offer, label: "Promotions"),
 
-          menuItem(
-            id: "customers",
-            icon: Icons.people,
-            label: "Customers",
-          ),
-
-          menuItem(
-            id: "staff",
-            icon: Icons.badge,
-            label: "Staff",
-          ),
-
-          menuItem(
-            id: "services",
-            icon: Icons.design_services,
-            label: "Services",
-          ),
-
-          menuItem(
-            id: "appointments",
-            icon: Icons.calendar_today,
-            label: "Appointments",
-          ),
-
-          menuItem(
-            id: "billing",
-            icon: Icons.receipt_long,
-            label: "Billing",
-          ),
-
-          menuItem(
-            id: "inventory",
-            icon: Icons.inventory,
-            label: "Inventory",
-          ),
-
-          menuItem(
-            id: "staff_shifts",
-            icon: Icons.access_time,
-            label: "Staff Shifts",
-          ),
-
-          menuItem(
-            id: "memberships",
-            icon: Icons.card_membership,
-            label: "Memberships",
-          ),
-
-          menuItem(
-            id: "treatment_sessions",
-            icon: Icons.healing,
-            label: "Treatment Sessions",
-          ),
-
-          // ⭐ NEW MODULE – PROMOTIONS
-          menuItem(
-            id: "promotions",
-            icon: Icons.local_offer,
-            label: "Promotions",
-          ),
+          // ⭐ NEW: Notifications
+          menuItem(id: "notifications", icon: Icons.notifications, label: "Notifications"),
 
           const Spacer(),
 
