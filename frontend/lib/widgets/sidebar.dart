@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 class Sidebar extends StatelessWidget {
   final Function(String) onNavigate;
   final String selected;
+  final String userRole;   // <-- thêm role
 
   const Sidebar({
     super.key,
     required this.onNavigate,
     required this.selected,
+    required this.userRole,
   });
 
   Widget _menuItem({
@@ -71,71 +73,28 @@ class Sidebar extends StatelessWidget {
 
           const SizedBox(height: 20),
 
-          _menuItem(
-            id: "dashboard",
-            icon: Icons.dashboard,
-            label: "Dashboard",
-          ),
-          _menuItem(
-            id: "customers",
-            icon: Icons.people,
-            label: "Customers",
-          ),
-          _menuItem(
-            id: "staff",
-            icon: Icons.badge,
-            label: "Staff",
-          ),
-          _menuItem(
-            id: "services",
-            icon: Icons.design_services,
-            label: "Services",
-          ),
-          _menuItem(
-            id: "appointments",
-            icon: Icons.calendar_today,
-            label: "Appointments",
-          ),
-          _menuItem(
-            id: "billing",
-            icon: Icons.receipt_long,
-            label: "Billing",
-          ),
-          _menuItem(
-            id: "inventory",
-            icon: Icons.inventory,
-            label: "Inventory",
-          ),
-          _menuItem(
-            id: "staff_shifts",
-            icon: Icons.access_time,
-            label: "Staff Shifts",
-          ),
-          _menuItem(
-            id: "treatment_sessions",
-            icon: Icons.healing,
-            label: "Treatment Sessions",
-          ),
-          _menuItem(
-            id: "memberships",
-            icon: Icons.card_membership,
-            label: "Memberships",
-          ),
-          _menuItem(
-            id: "promotions",
-            icon: Icons.local_offer,
-            label: "Promotions",
-          ),
-          _menuItem(
-            id: "notifications",
-            icon: Icons.notifications,
-            label: "Notifications",
-          ),
-          _menuItem(
-            id: "subscriptions",
-            icon: Icons.subscriptions,
-            label: "Subscriptions",
-          ),
+          // ========= MENU CHUNG =========
+          _menuItem(id: "dashboard", icon: Icons.dashboard, label: "Dashboard"),
+          _menuItem(id: "customers", icon: Icons.people, label: "Customers"),
+          _menuItem(id: "staff", icon: Icons.badge, label: "Staff"),
+          _menuItem(id: "services", icon: Icons.spa, label: "Services"),
+          _menuItem(id: "appointments", icon: Icons.calendar_today, label: "Appointments"),
+          _menuItem(id: "billing", icon: Icons.receipt_long, label: "Billing"),
+          _menuItem(id: "inventory", icon: Icons.inventory, label: "Inventory"),
+          _menuItem(id: "staff_shifts", icon: Icons.schedule, label: "Staff Shifts"),
+          _menuItem(id: "treatment_sessions", icon: Icons.healing, label: "Treatment Sessions"),
+          _menuItem(id: "memberships", icon: Icons.card_membership, label: "Memberships"),
+          _menuItem(id: "promotions", icon: Icons.local_offer, label: "Promotions"),
+          _menuItem(id: "notifications", icon: Icons.notifications, label: "Notifications"),
+          _menuItem(id: "subscriptions", icon: Icons.subscriptions, label: "Subscriptions"),
+
+          // ========= CHỈ CHO SYSTEM ADMIN =========
+          if (userRole == "system_admin")
+            _menuItem(
+              id: "license",
+              icon: Icons.verified_user,
+              label: "License Management",
+            ),
 
           const Spacer(),
 
