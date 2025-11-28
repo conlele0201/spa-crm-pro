@@ -1,141 +1,96 @@
 import 'package:flutter/material.dart';
-import '../controllers/dashboard_controller.dart';
-import 'customers_screen.dart';
-import 'staff_screen.dart';
+import '../widgets/sidebar.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  final String userRole;
+  final String? spaId;
+
+  const DashboardScreen({
+    super.key,
+    required this.userRole,
+    required this.spaId,
+  });
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  int selectedIndex = 0;
-  final DashboardController dashboard = DashboardController();
-  final String spaId = "spa-demo-123";
+  String selectedMenu = "dashboard";
 
-  @override
-  void initState() {
-    super.initState();
-    dashboard.loadDashboard(spaId);
+  void _navigate(String menu) {
+    setState(() {
+      selectedMenu = menu;
+    });
+  }
+
+  Widget _screen() {
+    switch (selectedMenu) {
+      case "customers":
+        return const Center(child: Text("Customers Screen"));
+      case "staff":
+        return const Center(child: Text("Staff Screen"));
+      case "services":
+        return const Center(child: Text("Services Screen"));
+      case "appointments":
+        return const Center(child: Text("Appointments Screen"));
+      case "billing":
+        return const Center(child: Text("Billing Screen"));
+      case "inventory":
+        return const Center(child: Text("Inventory Screen"));
+      case "staff_shifts":
+        return const Center(child: Text("Staff Shifts Screen"));
+      case "treatment_sessions":
+        return const Center(child: Text("Treatment Sessions Screen"));
+      case "memberships":
+        return const Center(child: Text("Memberships Screen"));
+      case "promotions":
+        return const Center(child: Text("Promotions Screen"));
+      case "notifications":
+        return const Center(child: Text("Notifications Screen"));
+      case "subscriptions":
+        return const Center(child: Text("Subscriptions Screen"));
+
+      case "license":
+        return const Center(child: Text("License Management Screen"));
+
+      default:
+        return const Center(child: Text("Dashboard"));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final pages = [
-      _dashboardUI(),
-      const CustomersScreen(),
-      const StaffScreen(),
-    ];
-
     return Scaffold(
       body: Row(
         children: [
-          NavigationRail(
-            selectedIndex: selectedIndex,
-            onDestinationSelected: (i) {
-              setState(() => selectedIndex = i);
-            },
-            labelType: NavigationRailLabelType.all,
-            destinations: const [
-              NavigationRailDestination(
-                icon: Icon(Icons.dashboard_outlined),
-                selectedIcon: Icon(Icons.dashboard),
-                label: Text("Dashboard"),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.people_alt_outlined),
-                selectedIcon: Icon(Icons.people),
-                label: Text("Khách hàng"),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.badge_outlined),
-                selectedIcon: Icon(Icons.badge),
-                label: Text("Nhân viên"),
-              ),
-            ],
+          Sidebar(
+            selected: selectedMenu,
+            userRole: widget.userRole,
+            onNavigate: _navigate,
           ),
-
-          Expanded(child: pages[selectedIndex]),
+          Expanded(
+            child: Column(
+              children: [
+                Container(
+                  height: 60,
+                  color: Colors.white,
+                  alignment: Alignment.centerLeft,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: Text(
+                    "Logged in as: ${widget.userRole.toUpperCase()}",
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Expanded(child: _screen()),
+              ],
+            ),
+          ),
         ],
       ),
-    );
-  }
-
-  Widget _dashboardUI() {
-    return AnimatedBuilder(
-      animation: dashboard,
-      builder: (_, __) {
-        if (dashboard.loading) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  _box("Khách mới hôm nay", dashboard.todayCustomers),
-                  const SizedBox(width: 20),
-                  _box("Lịch hẹn hôm nay", dashboard.todayAppointments),
-                  const SizedBox(width: 20),
-                  _box("Doanh thu hôm nay", dashboard.todayRevenue),
-                ],
-              ),
-              const SizedBox(height: 30),
-              _todayScheduleList(),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _box(String title, int value) {
-    return Expanded(
-      child: Container(
-        height: 120,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.blue.shade100,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(title,
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold, fontSize: 16)),
-            const SizedBox(height: 10),
-            Text(
-              value.toString(),
-              style:
-                  const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _todayScheduleList() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text("Lịch hẹn hôm nay",
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 10),
-        ...dashboard.todaySchedule.map((a) {
-          return Card(
-            child: ListTile(
-              title: Text(a['customer_name'] ?? "Chưa rõ"),
-              subtitle: Text("Giờ: ${a['scheduled_at']}"),
-            ),
-          );
-        })
-      ],
     );
   }
 }
