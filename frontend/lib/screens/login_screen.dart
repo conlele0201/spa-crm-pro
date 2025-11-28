@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../services/license_service.dart';
+import '../screens/dashboard.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -9,108 +11,121 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final AuthService _auth = AuthService();
+  final emailCtrl = TextEditingController();
+  final passCtrl = TextEditingController();
+  bool loading = false;
 
-  final TextEditingController _email = TextEditingController();
-  final TextEditingEditingController _password = TextEditingController();
+  Future<void> login() async {
+    final email = emailCtrl.text.trim();
+    final pass = passCtrl.text.trim();
 
-  bool _isLoading = false;
-  String? _errorMessage;
+    if (email.isEmpty || pass.isEmpty) return;
 
-  Future<void> _handleLogin() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+    setState(() => loading = true);
 
     try {
-      final response = await _auth.signIn(
-        email: _email.text.trim(),
-        password: _password.text.trim(),
-      );
+      // bước 1: đăng nhập supabase
+      final res = await Supabase.instance.client.auth
+          .signInWithPassword(email: email, password: pass);
 
-      if (response.user == null) {
-        setState(() => _errorMessage = "Sai email hoặc mật khẩu");
-      } else {
-        if (!mounted) return;
-        Navigator.pushReplacementNamed(context, '/dashboard');
+      final user = res.user;
+      if (user == null) {
+        showMessage("Login failed.");
+        setState(() => loading = false);
+        return;
       }
+
+      // bước 2: lấy user profile để biết spa_id
+      final profile = await Supabase.instance.client
+          .from('users')
+          .select()
+          .eq('id', user.id)
+          .maybeSingle();
+
+      if (profile == null) {
+        showMessage("User profile not found.");
+        setState(() => loading = false);
+        return;
+      }
+
+      final spaId = profile['spa_id'];
+      if (spaId == null) {
+        showMessage("User is not assigned to any spa.");
+        setState(() => loading = false);
+        return;
+      }
+
+      // bước 3: kiểm tra license của SPA
+      final licenseService = LicenseService();
+      final status = await licenseService.checkLicense(spaId);
+
+      if (status != "OK") {
+        switch (status) {
+          case "EXPIRED":
+            showMessage("License expired. Please renew to continue.");
+            break;
+          case "NO_LICENSE":
+            showMessage("No active license found for this spa.");
+            break;
+          case "INACTIVE":
+            showMessage("License is inactive. Contact admin.");
+            break;
+          default:
+            showMessage("License invalid.");
+        }
+
+        setState(() => loading = false);
+        return;
+      }
+
+      // bước 4: license OK -> vào dashboard
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const DashboardScreen()),
+      );
     } catch (e) {
-      setState(() => _errorMessage = "Đăng nhập thất bại");
-    } finally {
-      setState(() => _isLoading = false);
+      showMessage("Login error: $e");
     }
+
+    setState(() => loading = false);
+  }
+
+  void showMessage(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg)),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
       body: Center(
-        child: Container(
-          width: 380,
-          padding: const EdgeInsets.all(32),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 12,
-                offset: Offset(0, 4),
-              )
-            ],
-          ),
+        child: SizedBox(
+          width: 330,
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text(
-                "Spa CRM Pro",
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 24),
+              const Text("SPA CRM PRO LOGIN",
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 30),
 
               TextField(
-                controller: _email,
-                decoration: const InputDecoration(
-                  labelText: "Email",
-                  border: OutlineInputBorder(),
-                ),
+                controller: emailCtrl,
+                decoration: const InputDecoration(labelText: "Email"),
               ),
-
-              const SizedBox(height: 16),
-
-              TextField(
-                controller: _password,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: "Mật khẩu",
-                  border: OutlineInputBorder(),
-                ),
-              ),
-
               const SizedBox(height: 20),
 
-              if (_errorMessage != null)
-                Text(
-                  _errorMessage!,
-                  style: const TextStyle(color: Colors.red),
-                ),
+              TextField(
+                controller: passCtrl,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: "Password"),
+              ),
+              const SizedBox(height: 30),
 
-              const SizedBox(height: 16),
-
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _handleLogin,
-                  child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text("Đăng nhập"),
-                ),
+              ElevatedButton(
+                onPressed: loading ? null : login,
+                child: loading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text("Login"),
               ),
             ],
           ),
