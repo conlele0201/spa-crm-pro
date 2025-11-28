@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/license_service.dart';
-import '../screens/dashboard.dart';
+import 'dashboard.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,23 +19,26 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = emailCtrl.text.trim();
     final pass = passCtrl.text.trim();
 
-    if (email.isEmpty || pass.isEmpty) return;
+    if (email.isEmpty || pass.isEmpty) {
+      showMessage("Please enter email & password");
+      return;
+    }
 
     setState(() => loading = true);
 
     try {
-      // bước 1: đăng nhập supabase
-      final res = await Supabase.instance.client.auth
+      // 1) Login Supabase
+      final result = await Supabase.instance.client.auth
           .signInWithPassword(email: email, password: pass);
 
-      final user = res.user;
+      final user = result.user;
       if (user == null) {
         showMessage("Login failed.");
         setState(() => loading = false);
         return;
       }
 
-      // bước 2: lấy user profile để biết spa_id
+      // 2) Lấy profile người dùng
       final profile = await Supabase.instance.client
           .from('users')
           .select()
@@ -49,38 +52,54 @@ class _LoginScreenState extends State<LoginScreen> {
       }
 
       final spaId = profile['spa_id'];
-      if (spaId == null) {
-        showMessage("User is not assigned to any spa.");
-        setState(() => loading = false);
-        return;
-      }
+      final role = profile['role'] ?? "staff";
 
-      // bước 3: kiểm tra license của SPA
-      final licenseService = LicenseService();
-      final status = await licenseService.checkLicense(spaId);
-
-      if (status != "OK") {
-        switch (status) {
-          case "EXPIRED":
-            showMessage("License expired. Please renew to continue.");
-            break;
-          case "NO_LICENSE":
-            showMessage("No active license found for this spa.");
-            break;
-          case "INACTIVE":
-            showMessage("License is inactive. Contact admin.");
-            break;
-          default:
-            showMessage("License invalid.");
+      // 3) Nếu không phải system_admin thì phải kiểm tra license SPA
+      if (role != "system_admin") {
+        if (spaId == null) {
+          showMessage("Your account is not assigned to any Spa.");
+          setState(() => loading = false);
+          return;
         }
 
-        setState(() => loading = false);
-        return;
+        final licenseService = LicenseService();
+        final status = await licenseService.checkLicense(spaId);
+
+        if (status != "OK") {
+          switch (status) {
+            case "EXPIRED":
+              showMessage("License expired. Please renew to continue.");
+              break;
+            case "NO_LICENSE":
+              showMessage("No license found for this Spa.");
+              break;
+            case "INACTIVE":
+              showMessage("Spa license is inactive.");
+              break;
+            default:
+              showMessage("License invalid.");
+          }
+
+          setState(() => loading = false);
+          return;
+        }
       }
 
-      // bước 4: license OK -> vào dashboard
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const DashboardScreen()),
+      // 4) Lưu role vào session để Sidebar biết
+      Supabase.instance.client
+          .from('users')
+          .update({'last_login': DateTime.now().toIso8601String()})
+          .eq('id', user.id);
+
+      // 5) Vào dashboard (role sẽ xử lý menu)
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => DashboardScreen(
+            userRole: role,
+            spaId: spaId,
+          ),
+        ),
       );
     } catch (e) {
       showMessage("Login error: $e");
