@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../screens/dashboard.dart';
 import '../services/license_service.dart';
-import 'dashboard.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -27,18 +27,19 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => loading = true);
 
     try {
-      // 1) Login Supabase
+      // 1. Login Supabase
       final result = await Supabase.instance.client.auth
           .signInWithPassword(email: email, password: pass);
 
       final user = result.user;
+
       if (user == null) {
         showMessage("Login failed.");
         setState(() => loading = false);
         return;
       }
 
-      // 2) Lấy profile người dùng
+      // 2. Lấy profile người dùng
       final profile = await Supabase.instance.client
           .from('users')
           .select()
@@ -51,13 +52,13 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      final spaId = profile['spa_id'];
-      final role = profile['role'] ?? "staff";
+      final String role = profile['role'] ?? "staff";
+      final String? spaId = profile['spa_id'];
 
-      // 3) Nếu không phải system_admin thì phải kiểm tra license SPA
+      // 3. Nếu không phải system_admin thì kiểm tra license
       if (role != "system_admin") {
         if (spaId == null) {
-          showMessage("Your account is not assigned to any Spa.");
+          showMessage("Your account is not assigned to a Spa.");
           setState(() => loading = false);
           return;
         }
@@ -66,32 +67,13 @@ class _LoginScreenState extends State<LoginScreen> {
         final status = await licenseService.checkLicense(spaId);
 
         if (status != "OK") {
-          switch (status) {
-            case "EXPIRED":
-              showMessage("License expired. Please renew to continue.");
-              break;
-            case "NO_LICENSE":
-              showMessage("No license found for this Spa.");
-              break;
-            case "INACTIVE":
-              showMessage("Spa license is inactive.");
-              break;
-            default:
-              showMessage("License invalid.");
-          }
-
+          showMessage("License error: $status");
           setState(() => loading = false);
           return;
         }
       }
 
-      // 4) Lưu role vào session để Sidebar biết
-      Supabase.instance.client
-          .from('users')
-          .update({'last_login': DateTime.now().toIso8601String()})
-          .eq('id', user.id);
-
-      // 5) Vào dashboard (role sẽ xử lý menu)
+      // 4. Login OK → vào Dashboard
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -109,9 +91,8 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void showMessage(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg)),
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(msg)));
   }
 
   @override
