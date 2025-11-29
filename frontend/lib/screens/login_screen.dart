@@ -20,26 +20,24 @@ class _LoginScreenState extends State<LoginScreen> {
     final pass = passCtrl.text.trim();
 
     if (email.isEmpty || pass.isEmpty) {
-      showMessage("Please enter email & password");
+      showMsg("Please enter email & password");
       return;
     }
 
     setState(() => loading = true);
 
     try {
-      // 1. Login Supabase
-      final result = await Supabase.instance.client.auth
+      final auth = await Supabase.instance.client.auth
           .signInWithPassword(email: email, password: pass);
 
-      final user = result.user;
-
+      final user = auth.user;
       if (user == null) {
-        showMessage("Login failed.");
+        showMsg("Login failed.");
         setState(() => loading = false);
         return;
       }
 
-      // 2. Lấy profile người dùng
+      // Lấy profile user
       final profile = await Supabase.instance.client
           .from('users')
           .select()
@@ -47,7 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
           .maybeSingle();
 
       if (profile == null) {
-        showMessage("User profile not found.");
+        showMsg("User profile not found.");
         setState(() => loading = false);
         return;
       }
@@ -55,10 +53,10 @@ class _LoginScreenState extends State<LoginScreen> {
       final String role = profile['role'] ?? "staff";
       final String? spaId = profile['spa_id'];
 
-      // 3. Nếu không phải system_admin thì kiểm tra license
+      // Nếu không phải system_admin → kiểm tra license
       if (role != "system_admin") {
         if (spaId == null) {
-          showMessage("Your account is not assigned to a Spa.");
+          showMsg("Your account is not assigned to a Spa.");
           setState(() => loading = false);
           return;
         }
@@ -66,14 +64,33 @@ class _LoginScreenState extends State<LoginScreen> {
         final licenseService = LicenseService();
         final status = await licenseService.checkLicense(spaId);
 
-        if (status != "OK") {
-          showMessage("License error: $status");
-          setState(() => loading = false);
-          return;
+        switch (status) {
+          case "NO_LICENSE":
+            showMsg("This Spa has no license.");
+            setState(() => loading = false);
+            return;
+
+          case "INACTIVE":
+            showMsg("License is disabled.");
+            setState(() => loading = false);
+            return;
+
+          case "INVALID":
+            showMsg("License is invalid.");
+            setState(() => loading = false);
+            return;
+
+          case "EXPIRED":
+            showMsg("License expired. Please renew.");
+            setState(() => loading = false);
+            return;
+
+          case "OK":
+            break; // Cho phép login
         }
       }
 
-      // 4. Login OK → vào Dashboard
+      // Login OK → vào dashboard
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -84,13 +101,13 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
     } catch (e) {
-      showMessage("Login error: $e");
+      showMsg("Login error: $e");
     }
 
     setState(() => loading = false);
   }
 
-  void showMessage(String msg) {
+  void showMsg(String msg) {
     ScaffoldMessenger.of(context)
         .showSnackBar(SnackBar(content: Text(msg)));
   }
@@ -100,12 +117,13 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       body: Center(
         child: SizedBox(
-          width: 330,
+          width: 340,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Text("SPA CRM PRO LOGIN",
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                  style: TextStyle(
+                      fontSize: 24, fontWeight: FontWeight.bold)),
               const SizedBox(height: 30),
 
               TextField(
