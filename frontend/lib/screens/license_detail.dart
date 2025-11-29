@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'license_renew.dart';
 
 class LicenseDetailScreen extends StatefulWidget {
   final String licenseId;
@@ -44,15 +45,9 @@ class _LicenseDetailScreenState extends State<LicenseDetailScreen> {
     }
 
     final spaName = license!['spas']?['name'] ?? "Unknown Spa";
-    final status = license!['status'] ?? "unknown";
-    final created = license!['created_at'] ?? "";
-    final expire = license!['expires_at'] ?? "";
-
-    final expiresAt = DateTime.tryParse(expire.toString());
-    final now = DateTime.now();
-    final daysLeft = expiresAt != null
-        ? expiresAt.difference(now).inDays
-        : null;
+    final start = license!['start_date'] ?? "";
+    final end = license!['end_date'] ?? "";
+    final active = license!['active'] ?? false;
 
     return Scaffold(
       appBar: AppBar(title: const Text("License Details")),
@@ -62,28 +57,36 @@ class _LicenseDetailScreenState extends State<LicenseDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text("Spa: $spaName",
-                style: const TextStyle(
-                    fontSize: 20, fontWeight: FontWeight.bold)),
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
 
-            Text("Status: ${status.toUpperCase()}",
-                style: const TextStyle(fontSize: 16)),
-            Text("Created at: $created", style: const TextStyle(fontSize: 16)),
-            Text("Expires at: $expire", style: const TextStyle(fontSize: 16)),
+            Text("Start Date: $start", style: const TextStyle(fontSize: 16)),
+            Text("End Date: $end", style: const TextStyle(fontSize: 16)),
             const SizedBox(height: 10),
 
-            if (daysLeft != null)
-              Text("Days remaining: $daysLeft",
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: daysLeft <= 0 ? Colors.red : Colors.green)),
+            Text(
+              "Status: ${active ? "ACTIVE" : "INACTIVE"}",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: active ? Colors.green : Colors.red,
+              ),
+            ),
 
-            const SizedBox(height: 30),
+            const SizedBox(height: 40),
 
             ElevatedButton(
-              onPressed: () {
-                // bước 71.3 sẽ xử lý Renew
+              onPressed: () async {
+                final renewed = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => LicenseRenewScreen(licenseId: widget.licenseId),
+                  ),
+                );
+
+                if (renewed == true) {
+                  loadDetail();
+                }
               },
               child: const Text("Renew License"),
             ),
@@ -93,4 +96,3 @@ class _LicenseDetailScreenState extends State<LicenseDetailScreen> {
     );
   }
 }
-
