@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
-import 'dashboard_screen.dart';   // ⭐ THÊM DÒNG NÀY – FIX LỖI
+import 'dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
   final AuthService _authService = AuthService();
-
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
@@ -26,34 +27,32 @@ class _LoginScreenState extends State<LoginScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Text(
-                "SPA CRM PRO – LOGIN",
+                'SPA CRM PRO – LOGIN',
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 20),
-
               TextField(
                 controller: emailController,
-                decoration: const InputDecoration(labelText: "Email"),
+                decoration: const InputDecoration(labelText: 'Email'),
               ),
               TextField(
                 controller: passwordController,
+                decoration: const InputDecoration(labelText: 'Password'),
                 obscureText: true,
-                decoration: const InputDecoration(labelText: "Password"),
               ),
-
               const SizedBox(height: 20),
-
               if (errorMessage != null)
-                Text(errorMessage!, style: const TextStyle(color: Colors.red)),
-
+                Text(
+                  errorMessage!,
+                  style: const TextStyle(color: Colors.red),
+                ),
               const SizedBox(height: 10),
-
               ElevatedButton(
-                onPressed: isLoading ? null : login,
+                onPressed: isLoading ? null : _handleLogin,
                 child: isLoading
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text("Login"),
-              )
+                    : const Text('Login'),
+              ),
             ],
           ),
         ),
@@ -61,23 +60,32 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Future<void> login() async {
-    setState(() => isLoading = true);
+  Future<void> _handleLogin() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
 
     final result = await _authService.signIn(
       emailController.text.trim(),
       passwordController.text.trim(),
     );
 
-    setState(() => isLoading = false);
+    setState(() {
+      isLoading = false;
+    });
 
-    if (result == "success") {
+    if (result == 'success') {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => DashboardScreen()), // ⭐ FIXED
+        MaterialPageRoute(
+          builder: (_) => const DashboardScreen(userRole: 'owner'),
+        ),
       );
     } else {
-      setState(() => errorMessage = result);
+      setState(() {
+        errorMessage = result;
+      });
     }
   }
 }
